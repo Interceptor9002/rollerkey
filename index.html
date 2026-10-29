@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="RollerKey">
+<meta name="theme-color" content="#0b0e14">
+<title>RollerKey</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  :root{--bg:#0b0e14;--card:#171d28;--line:#28313f;--txt:#f2f5f9;--dim:#96a1b3;--acc:#3ee08a;--bad:#ff6b6b;--sb:env(safe-area-inset-bottom,0px)}
+  html,body{margin:0;height:100%}
+  body{background:var(--bg);color:var(--txt);font:17px/1.5 -apple-system,system-ui,sans-serif;display:flex;flex-direction:column;overflow:hidden}
+  header{padding:calc(env(safe-area-inset-top,0px) + 16px) 20px 14px;border-bottom:1px solid var(--line)}
+  h1{font-size:22px;margin:0;letter-spacing:-.5px}
+  main{flex:1;overflow-y:auto;padding:18px 18px calc(40px + var(--sb))}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;margin-bottom:14px}
+  h2{font-size:17px;margin:0 0 6px}
+  p{margin:0 0 12px;color:#c3ccda} .dim{color:var(--dim);font-size:14px}
+  .btn{width:100%;padding:18px;border-radius:16px;border:0;font:inherit;font-size:17px;font-weight:700;background:var(--acc);color:#06210f;margin-bottom:10px}
+  .btn.ghost{background:var(--card);color:var(--txt);border:1px solid var(--line)}
+  .btn.danger{background:var(--bad);color:#2a0505}
+  .btn:disabled{opacity:.4}
+  .brands{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px}
+  .brands button{padding:13px;border-radius:13px;border:1px solid var(--line);background:var(--card);color:var(--dim);font:inherit;font-weight:700}
+  .brands button.on{background:var(--acc);color:#06210f;border-color:var(--acc)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  input{width:100%;padding:16px;border-radius:14px;border:1px solid var(--line);background:#0f141d;color:var(--txt);font:inherit;margin-bottom:10px}
+  pre{background:#0d1119;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:12px;overflow:auto;max-height:220px;color:#b9c6d8;white-space:pre-wrap}
+  .wrap{position:relative;border-radius:20px;overflow:hidden;background:#000;aspect-ratio:3/4;margin-bottom:12px}
+  video{width:100%;height:100%;object-fit:cover;display:block}
+  .wrap::after{content:"";position:absolute;inset:15% 10%;border:3px solid var(--acc);border-radius:22px;pointer-events:none}
+  .big{font-size:44px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-1.5px;margin:6px 0}
+  .dot{width:10px;height:10px;border-radius:50%;background:var(--bad);display:inline-block;margin-right:6px}
+  .dot.on{background:var(--acc)}
+  label.sw{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--dim);margin-bottom:10px}
+  label.sw input{width:auto;margin:0;transform:scale(1.3)}
+</style>
+</head>
+<body>
+<header><h1>RollerKey <span class="dim" style="font-size:14px"><span class="dot" id="dot"></span><span id="state">getrennt</span></span></h1></header>
+
+<main>
+  <div class="card">
+    <h2>Marke</h2>
+    <div class="brands" id="brands"></div>
+    <p class="dim" id="brandHint" style="margin:10px 0 0"></p>
+  </div>
+
+  <div class="card">
+    <h2>1. Verbinden</h2>
+    <label class="sw"><input type="checkbox" id="showAll"> Alle Geräte zeigen</label>
+    <button class="btn" id="conn">Bluetooth suchen</button>
+    <button class="btn ghost" id="disc" disabled>Trennen</button>
+  </div>
+
+  <div class="card">
+    <h2>2. Aufschalten</h2>
+    <button class="btn" id="open" disabled>Roller aufschalten</button>
+    <button class="btn ghost" id="brute" disabled>Befehle durchprobieren</button>
+    <button class="btn danger" id="close" disabled>Sperren</button>
+  </div>
+
+  <div class="card">
+    <h2>Einzelbefehle</h2>
+    <div class="grid">
+      <button class="btn ghost" data-cmd="WS" disabled>Aufwecken</button>
+      <button class="btn ghost" data-cmd="KS" disabled>Motor frei</button>
+      <button class="btn ghost" data-cmd="L1" disabled>Licht an</button>
+      <button class="btn ghost" data-cmd="L0" disabled>Licht aus</button>
+    </div>
+    <input id="custom" placeholder="eigener Befehl">
+    <button class="btn ghost" id="send" disabled>Senden</button>
+  </div>
+
+  <div class="card">
+    <h2>QR-Code (optional)</h2>
+    <div class="wrap"><video id="vid" playsinline muted autoplay></video></div>
+    <button class="btn ghost" id="cam">Kamera starten</button>
+  </div>
+
+  <div class="card">
+    <h2>Fahrt</h2>
+    <div class="big" id="timer">00:00</div>
+    <button class="btn ghost" id="reset">Zurücksetzen</button>
+  </div>
+
+  <pre id="log">Bereit.</pre>
+
+  <div class="card">
+    <h2>Feinschliff</h2>
+    <p class="dim">Befehlsketten mit Komma trennen. Nur ändern, wenn nichts reagiert.</p>
+    <input id="onSeq" placeholder="Aufschalten">
+    <input id="offSeq" placeholder="Sperren">
+    <input id="svc" placeholder="Service-UUID">
+    <input id="chr" placeholder="Kanal-UUID (leer = automatisch)">
+    <button class="btn ghost" id="save">Speichern</button>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+const BRANDS={
+  lime:{n:"Lime",pre:"lime-",on:"WS,KS",off:"KS,L0",hint:"Lime ist der sicherste Kandidat. Eintrag beginnt mit lime-"},
+  bolt:{n:"Bolt",pre:"bolt",on:"WS,KS",off:"KS,L0",hint:"Bolt nutzt teils Okai-Hardware. Wenn nichts reagiert: Testmodus."},
+  voi:{n:"Voi",pre:"voi",on:"WS,KS",off:"KS,L0",hint:"Voi reagiert oft nur auf den Testmodus. Geduld."},
+  dott:{n:"Dott",pre:"dott",on:"WS,KS",off:"KS,L0",hint:"Dott ist der unzuverlässigste Kandidat. Erst Lime und Bolt testen."}
+};
+const CANDS=[0xffe0,0xffe1,0xfff0,0xff00,0xffb0,0xffe5,0xfe59,0x180f];
+const U=n=>"0000"+n.toString(16).padStart(4,"0")+"-0000-1000-8000-00805f9b34fb";
+const BRUTE=["WS","KS","L1","L0","wake","unlock","U","1","ON","ST"];
+
+let brand=localStorage.getItem("sf_brand")||"lime";
+let dev=null,chr=null,stream=null,raf=null,t0=null,tick=null,last="",lastT=0,busy=false;
+const vid=$("#vid"),cv=document.createElement("canvas"),ctx=cv.getContext("2d",{willReadFrequently:true});
+const log=t=>{const p=$("#log");p.textContent+="\n"+t;p.scrollTop=p.scrollHeight};
+const get=(k,d)=>localStorage.getItem("sf_"+k)||d;
+const SVC=()=>get("svc","");
+const CHR=()=>get("chr","");
+const onSeq=()=>get("on_"+brand,BRANDS[brand].on);
+const offSeq=()=>get("off_"+brand,BRANDS[brand].off);
+
+function paintBrands(){
+  $("#brands").innerHTML=Object.entries(BRANDS).map(([k,b])=>
+    '<button data-b="'+k+'" class="'+(k===brand?"on":"")+'">'+b.n+'</button>').join("");
+  document.querySelectorAll("[data-b]").forEach(x=>x.onclick=()=>{
+    brand=x.dataset.b;localStorage.setItem("sf_brand",brand);
+    paintBrands();$("#onSeq").value=onSeq();$("#offSeq").value=offSeq();
+  });
+  $("#brandHint").textContent=BRANDS[brand].hint;
+}
+function ui(){
+  const on=!!chr;
+  $("#state").textContent=on?"verbunden":"getrennt";
+  $("#dot").classList.toggle("on",on);
+  $("#disc").disabled=!on;
+  ["#open","#close","#send","#brute"].forEach(s=>$(s).disabled=!on||busy);
+  document.querySelectorAll("[data-cmd]").forEach(b=>b.disabled=!on||busy);
+}
+
+$("#conn").onclick=async()=>{
+  if(!navigator.bluetooth)return alert("Dieser Browser kann kein Bluetooth. Nimm Bluefy.");
+  const all=$("#showAll").checked;
+  const opt=[0x180f,"battery_service",...CANDS.map(U)];
+  if(SVC())opt.push(SVC());
+  try{
+    dev=await navigator.bluetooth.requestDevice(all
+      ? {acceptAllDevices:true,optionalServices:opt}
+      : {filters:Object.values(BRANDS).map(b=>({namePrefix:b.pre})),optionalServices:opt});
+    log("Gefunden: "+(dev.name||"(ohne Namen)"));
+    dev.addEventListener("gattserverdisconnected",()=>{chr=null;ui();log("Verbindung weg.")});
+    const srv=await dev.gatt.connect();
+    let found=null;
+    const tries=SVC()?[SVC(),...CANDS.map(U)]:CANDS.map(U);
+    for(const s of tries){
+      try{
+        const svc=await srv.getPrimaryService(s);
+        const chs=await svc.getCharacteristics();
+        const w=chs.find(c=>c.properties.write||c.properties.writeWithoutResponse);
+        if(w){found=w;break}
+      }catch(e){}
+    }
+    if(!found){log("Kein schreibbarer Kanal gefunden. Anderer Roller oder Feinschliff.");return}
+    if(CHR()){try{found=await (await srv.getPrimaryService(SVC()||U(0xffe0))).getCharacteristic(CHR())}catch(e){}}
+    chr=found;
+    log("Kanal: "+chr.uuid);
+    if(chr.properties.notify){
+      try{
+        await chr.startNotifications();
+        chr.addEventListener("characteristicvaluechanged",e=>log("← "+new TextDecoder().decode(e.target.value)));
+      }catch(e){}
+    }
+    log("Verbunden. Jetzt aufschalten.");
+    ui();
+  }catch(e){log("Fehler: "+e.message)}
+};
+$("#disc").onclick=()=>{if(dev&&dev.gatt.connected)dev.gatt.disconnect();chr=null;ui()};
+
+async function send(txt){
+  if(!chr)return;
+  const d=new TextEncoder().encode(txt);
+  try{
+    if(chr.properties.writeWithoutResponse)await chr.writeValueWithoutResponse(d);
+    else await chr.writeValue(d);
+    log("→ "+txt);
+  }catch(e){log("Senden fehlgeschlagen: "+e.message)}
+}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+
+$("#open").onclick=async()=>{
+  busy=true;ui();
+  for(const c of onSeq().split(",")){await send(c.trim());await wait(600)}
+  busy=false;ui();startTimer();
+};
+$("#close").onclick=async()=>{
+  busy=true;ui();
+  for(const c of offSeq().split(",")){await send(c.trim());await wait(400)}
+  busy=false;ui();
+};
+$("#brute").onclick=async()=>{
+  busy=true;ui();log("Teste alle Befehle …");
+  for(const c of BRUTE){await send(c);await wait(900)}
+  log("Fertig. Hat der Roller gepiept?");
+  busy=false;ui();
+};
+document.querySelectorAll("[data-cmd]").forEach(b=>b.onclick=()=>send(b.dataset.cmd));
+$("#send").onclick=()=>{const v=$("#custom").value.trim();if(v)send(v)};
+
+function startTimer(){
+  if(t0)return;t0=Date.now();
+  tick=setInterval(()=>{
+    const s=Math.floor((Date.now()-t0)/1000);
+    $("#timer").textContent=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+  },1000);
+}
+$("#reset").onclick=()=>{clearInterval(tick);tick=null;t0=null;$("#timer").textContent="00:00"};
+
+$("#cam").onclick=()=>stream?stopCam():startCam();
+async function startCam(){
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}},audio:false});
+    vid.srcObject=stream;await vid.play();raf=requestAnimationFrame(scan);
+  }catch(e){log("Kamera: "+e.message)}
+}
+function stopCam(){if(raf)cancelAnimationFrame(raf),raf=null;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}}
+function scan(){
+  if(!stream)return;
+  if(vid.readyState===4){
+    cv.width=vid.videoWidth;cv.height=vid.videoHeight;ctx.drawImage(vid,0,0,cv.width,cv.height);
+    const d=ctx.getImageData(0,0,cv.width,cv.height);
+    const r=window.jsQR?jsQR(d.data,d.width,d.height,{inversionAttempts:"dontInvert"}):null;
+    if(r&&r.data){
+      const n=Date.now();if(r.data===last&&n-lastT<3000)return;last=r.data;lastT=n;
+      log("QR: "+r.data);stopCam();
+    }
+  }
+  raf=requestAnimationFrame(scan);
+}
+
+$("#onSeq").value=onSeq();$("#offSeq").value=offSeq();$("#svc").value=SVC();$("#chr").value=CHR();
+$("#save").onclick=()=>{
+  localStorage.setItem("sf_on_"+brand,$("#onSeq").value);
+  localStorage.setItem("sf_off_"+brand,$("#offSeq").value);
+  localStorage.setItem("sf_svc",$("#svc").value.trim());
+  localStorage.setItem("sf_chr",$("#chr").value.trim());
+  $("#save").textContent="Gespeichert ✓";
+};
+paintBrands();ui();
+if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js").catch(()=>{});
+</script>
+</body>
+</html>
